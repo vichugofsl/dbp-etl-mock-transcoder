@@ -1,0 +1,11 @@
+.DS_Store
+*.pyc
+*.log
+*.sql
+*.txt
+Errors.out
+lpts-dbp.xml
+lambda/**/*.zip
+lambda/**/dbp-etl.cfg
+.vscode/
+.env
