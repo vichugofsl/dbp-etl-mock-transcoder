@@ -87,3 +87,35 @@ This starts a Flask web server listening on http://127.0.0.1:5000.
 ## Note
 
 This example is a basic simulation of AWS Elastic Transcoder for educational purposes and is not meant for production.
+
+## Adjust AWS SDK Calls in Your Application
+In your application where you are using the AWS SDK to interact with Elastic Transcoder, you'll need to change the endpoint that the SDK is using to your local Flask server. Here's an example in Python using boto3:
+
+```python
+
+import boto3
+
+# Create a client and point it to the local server
+self.client = boto3.client(
+  'elastictranscoder',
+  region_name='us-east-1',
+  endpoint_url='http://localhost:5000'
+)
+
+# Example 1 CreateJob request
+response = client.create_job(
+    PipelineId='your-pipeline-id',
+    Inputs=[{'Key': 'path_to_input_file'}],
+    Outputs=[{'Key': 'path_to_output_file', 'PresetId': 'preset-id'}]
+)
+
+# Example 2 CreateJob request
+response = self.client.create_job(
+  PipelineId=self.videoPipeline,
+  Inputs=inputs,
+  Outputs=outputs,
+  Playlists=playlists
+)
+
+print(response)
+```
