@@ -74,5 +74,77 @@ def get_job(job_id):
     else:
         return jsonify({'Error': 'Job not found'}), 404
 
+@app.route('/job/<job_id>', methods=['GET'])
+def get_audio_job(job_id):
+    api_key = request.headers.get('X-API-Key')
+
+    print("=======================================================================")
+    print("GET Audio Transcoding Result.........")
+    print("API Key: " + api_key)
+    print("=======================================================================")
+    # Retrieve job information from in-memory storage
+    job = jobs.get(int(job_id))
+    if job:
+        return jsonify(job['Job'])
+    else:
+        return jsonify({'Error': 'Job not found'}), 404
+
+@app.route('/job', methods=['POST'])
+def run_audio_job():
+    local_path = os.environ.get('LOCAL_VIDEO_FOLDER_PATH')
+    api_key = request.headers.get('X-API-Key')
+    print("=======================================================================")
+    print("GET Audio Transcoding Result.........")
+    print("API Key: " + api_key)
+    print("request.json: ")
+    print(request)
+    print("=======================================================================")
+    job_id = int(time.time()*1000)
+    input_job = request.json['input']
+    input_key = input_job['key']
+
+    outputs = request.json['output']
+    # Retrieve job information from in-memory storage
+    job_outputs = []
+    files = []
+    for output in outputs:
+        dirname_output = os.path.dirname(output['key'])
+        job_outputs.append({
+            'bucket': output['bucket'],
+            'key': dirname_output + '/' + input_key,
+            'container': output['container'],
+            'codec': output['codec'],
+            'bitrate': output['bitrate'],
+        })
+        file_name_input = 'XNM___NM_Book_____FILESETID.mp3'
+        file_name_output = 'XNM___NM_Book____FILESETID.mp3'
+        files.append({
+            'input': {
+                'key': output['key'] + '/'+ file_name_input,
+                'duration': 100
+            },
+            'output': {
+                'key': dirname_output + '/' + input_key + '/' + file_name_output,
+                'duration': 101
+            }
+        })
+
+    job = {
+        'Job': {
+            'status': 'Complete',
+            'id': str(job_id),
+            'output': job_outputs,
+            'files': files,
+        }
+    }
+
+    jobs[job_id] = job
+
+    if job:
+        print(job['Job'])
+        return jsonify(job['Job'])
+    else:
+        return jsonify({'Error': 'Job not found'}), 404
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

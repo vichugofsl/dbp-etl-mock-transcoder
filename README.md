@@ -1,5 +1,6 @@
 # Mocking AWS Elastic Transcoder Locally
 
+
 The given Python example is a mock implementation of AWS Elastic Transcoder using Flask and FFmpeg. The purpose is to simulate the AWS Elastic Transcoder service locally, which can be helpful for testing and development without incurring AWS costs or requiring internet access.
 Overview
 
@@ -21,7 +22,7 @@ You can install Flask using pip:
 pip install Flask
 ```
 
-## Code Structure
+## Code Structure for VIDEO
 
 1. The script starts a Flask web server.
 2. There is a POST endpoint `(/2012-09-25/jobs)` that simulates the creation of a new Elastic Transcoder job.
@@ -118,4 +119,34 @@ response = self.client.create_job(
 )
 
 print(response)
+```
+
+## Code Structure for Audio
+
+1. The script starts a Flask web server.
+2. There is a POST endpoint `(/job)` that simulates the creation of a new Elastic Transcoder job.
+3. There is a GET endpoint `(/job/<job_id>)` to retrieve the status and information of a specific job.
+
+## Sample Inputs
+
+When creating a job, you can send a POST request with JSON data that includes inputs, outputs, and playlists.
+
+Example:
+
+```json
+{
+  "input": {
+    "bucket": "etl-bucket-input",
+    "key": "FILESET_ID" 
+  },
+  "output": [
+    {
+      "bucket": "dbp-bucket",
+      "key": "audio/BIBLE_ID/FILESET_ID-opus16",
+      "bitrate": 16,
+      "container": "webm",
+      "codec": "opus"
+    }
+  ]
+}
 ```
