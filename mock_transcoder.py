@@ -1,11 +1,16 @@
 from flask import Flask, request, jsonify
-import subprocess
 import time
 import os
+import boto3
+import logging
 
 app = Flask(__name__)
 # In-memory storage for job status
 jobs = {}
+
+# Initialize S3 session
+s3_session = boto3.Session(profile_name='dbp-etl-dev')
+s3_client = s3_session.client('s3')
 
 @app.route('/2012-09-25/jobs', methods=['POST'])
 def create_job():
@@ -91,7 +96,6 @@ def get_audio_job(job_id):
 
 @app.route('/job', methods=['POST'])
 def run_audio_job():
-    local_path = os.environ.get('LOCAL_VIDEO_FOLDER_PATH')
     api_key = request.headers.get('X-API-Key')
     print("=======================================================================")
     print("GET Audio Transcoding Result.........")
@@ -101,33 +105,51 @@ def run_audio_job():
     print("=======================================================================")
     job_id = int(time.time()*1000)
     input_job = request.json['input']
-    input_key = input_job['key']
+    print("input_job")
+    print(input_job)
 
     outputs = request.json['output']
+    print("outputs")
+    print(outputs)
     # Retrieve job information from in-memory storage
     job_outputs = []
     files = []
     for output in outputs:
-        dirname_output = os.path.dirname(output['key'])
         job_outputs.append({
             'bucket': output['bucket'],
-            'key': dirname_output + '/' + input_key,
+            'key':  output['key'],
             'container': output['container'],
             'codec': output['codec'],
             'bitrate': output['bitrate'],
         })
-        file_name_input = 'XNM___NM_Book_____FILESETID.mp3'
-        file_name_output = 'XNM___NM_Book____FILESETID.mp3'
-        files.append({
-            'input': {
-                'key': output['key'] + '/'+ file_name_input,
-                'duration': 100
-            },
-            'output': {
-                'key': dirname_output + '/' + input_key + '/' + file_name_output,
-                'duration': 101
-            }
-        })
+
+        # List files in the S3 bucket under the specified path
+        bucket_name = output['bucket']
+        output_key_prefix = output['key']
+        s3_path = f"{output_key_prefix}/"
+        print("s3_path")
+        print(s3_path)
+        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=s3_path)
+
+        # Populate the files array with each file's input and output details
+        if 'Contents' in response:
+            for item in response['Contents']:
+                if "Art" not in item['Key']:
+                    file_name_output = os.path.basename(item['Key'])
+
+                    # Add file entry to files array
+                    files.append({
+                        'input': {
+                            'key': item['Key'],
+                            'duration': 100  # Placeholder for duration, could be updated with actual values if available
+                        },
+                        'output': {
+                            'key': f"{output['key']}/{file_name_output}",
+                            'duration': 101  # Placeholder for duration
+                        }
+                    })
+        else:
+            logging.warning(f"No files found in S3 path {s3_path}")
 
     job = {
         'Job': {
@@ -141,7 +163,6 @@ def run_audio_job():
     jobs[job_id] = job
 
     if job:
-        print(job['Job'])
         return jsonify(job['Job'])
     else:
         return jsonify({'Error': 'Job not found'}), 404
