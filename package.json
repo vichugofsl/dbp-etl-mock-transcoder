@@ -1,0 +1,14 @@
+{
+    "name": "transcoding-mock-server",
+    "version": "1.0.0",
+    "description": "A serverless transcoding mock server deployed on AWS Lambda using Flask and Mangum",
+    "scripts": {
+        "deploy": "serverless deploy",
+        "offline": "serverless offline"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "serverless": "<4.0.0",
+        "serverless-python-requirements": "^5.1.0"
+    }
+}

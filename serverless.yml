@@ -1,0 +1,36 @@
+service: transcoding-mock-server
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage, 'dev'}
+  region: ${env:AWS_REGION, 'us-west-2'}
+  # Any additional environment variables can be added here.
+  environment:
+    LOCAL_VIDEO_FOLDER_PATH: /tmp
+  # Configure the HTTP API gateway (v2)
+  httpApi:
+    payload: "1.0"
+    cors: true
+
+functions:
+  transcoder:
+    handler: index.lambda_handler
+    description: "Transcoding mock server running a Flask app via Mangum"
+    events:
+      # This event will route all HTTP methods and paths to your Lambda
+      - httpApi:
+          path: /{proxy+}
+          method: any
+
+plugins:
+  - serverless-python-requirements
+
+package:
+  # Include your application files (adjust if your main file is named differently)
+  include:
+    - index.py
+    - requirements.txt
+    - package.json

@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+      python: 3.8
+    commands:
+      - echo Installing Serverless framework globally...
+      - yarn install --frozen-lockfile
+      - yarn global add serverless@3
+      - echo Installing dependencies...
+      - yarn install
+      - pip install -r requirements.txt
+  pre_build:
+    commands:
+      - echo Logging in to AWS CLI...
+      # Ensure that CodeBuild has permissions to deploy; use IAM roles.
+  build:
+    commands:
+      - echo Deploying via Serverless...
+      - sls deploy --stage ${environment}
+artifacts:
+  files:
+    - '**/*'
